@@ -1,5 +1,7 @@
 module.exports = (router, runQuery, checkDup, updateNext) => {
 
+    const {sanitize, unescape} = require('../helperFuncs/sanitize');
+
     // Adding to recipe list new recipe
     router.put('/', async (req, res) => {
         const {id, recipe} = req.body;
@@ -9,6 +11,8 @@ module.exports = (router, runQuery, checkDup, updateNext) => {
         recipe._next = "";
 
         let result;
+
+        recipe.title = sanitize(recipe.title);
 
         try{
             if(await checkDup(recipe.title, id)){
@@ -32,6 +36,13 @@ module.exports = (router, runQuery, checkDup, updateNext) => {
             recipe._head = tailRecipe;
         }
 
+        recipe['steps'].forEach(function(e, index){
+            recipe['steps'][index] = sanitize(e).replace(/[\n\r]/g, " ");
+        });
+        recipe['ingredients'].forEach(function(e){
+            e.ingredient = sanitize(e.ingredient);
+            e.quantity = sanitize(e.quantity);
+        });
         var newRecipeList = {};
         newRecipeList[recipe.title] = recipe;
         var defaultObj = {_head : recipe.title, _tail : recipe.title, recipelist : newRecipeList};
@@ -61,7 +72,9 @@ module.exports = (router, runQuery, checkDup, updateNext) => {
         let result;
         let query;
 
-        if(current){
+        const filterCurrent = (current) ? sanitize(current) : "";
+
+        if(filterCurrent){
             query = `CALL getrecipes("${filterCurrent}", ${id}); SELECT view_recipes FROM recipes WHERE user_id = '${id}'; UPDATE recipes SET view_recipes = NULL WHERE user_id = '${id}';`;
         }else{
             query = `CALL getrecipes(NULL, ${id}); SELECT view_recipes FROM recipes WHERE user_id = '${id}'; UPDATE recipes SET view_recipes = NULL WHERE user_id = '${id}';`;
@@ -87,10 +100,11 @@ module.exports = (router, runQuery, checkDup, updateNext) => {
 
                 for(var obj of ids){
                     if(obj != '_tail' && obj != '_end' && obj != current){
-                        list.push({id: obj, image: (recipes[obj].hasOwnProperty('images') && recipes[obj]['images'].length > 0) ? recipes[obj]['images'][0] : ""});
+                        const objId = unescape(obj);
+                        list.push({id: objId, image: (recipes[obj].hasOwnProperty('images') && recipes[obj]['images'].length > 0) ? recipes[obj]['images'][0] : ""});
                     }
                 }
-                return res.json({list : list, _tail: recipes._tail, _end: recipes._end});
+                return res.json({list : list, _tail: unescape(recipes._tail), _end: recipes._end});
 
             }else{
                 return res.json({list : [], _tail: "", _end: 1});
@@ -107,8 +121,11 @@ module.exports = (router, runQuery, checkDup, updateNext) => {
         let result;
         let query;
 
+        const filterCurrent = (current) ? sanitize(current) : "";
 
-        if(current){
+        const filteredTerm = (term) ? sanitize(term) : "";
+
+        if(filterCurrent){
             query = `UPDATE recipes SET view_recipes = recipes.recipeList->"$.recipelist.*" WHERE user_id = ${id};` + 
                     `SELECT j.title FROM recipes, JSON_TABLE(recipes.view_recipes, '$[*]' ` + 
                     `COLUMNS ( ` +
@@ -120,7 +137,7 @@ module.exports = (router, runQuery, checkDup, updateNext) => {
                     ` _next TEXT PATH '$._next', `+
                     `ingredients JSON PATH '$.ingredients' `+
                     `)) AS j `+
-                    `WHERE user_id = ${id} AND j.title REGEXP '${term}' AND j.title > '${current}' ORDER BY j.title ASC LIMIT 20;` +
+                    `WHERE user_id = ${id} AND j.title REGEXP '${filteredTerm}' AND j.title > '${filterCurrent}' ORDER BY j.title ASC LIMIT 20;` +
                     `UPDATE recipes SET view_recipes = NULL WHERE user_id = '${id}';`;
         }else{
             query = `UPDATE recipes SET view_recipes = recipes.recipeList->"$.recipelist.*" WHERE user_id = ${id};` + 
@@ -134,7 +151,7 @@ module.exports = (router, runQuery, checkDup, updateNext) => {
                     ` _next TEXT PATH '$._next', `+
                     `ingredients JSON PATH '$.ingredients' `+
                     `)) AS j `+
-                    `WHERE user_id = '${id}' AND j.title REGEXP '${term}' ORDER BY j.title ASC LIMIT 20;` +
+                    `WHERE user_id = '${id}' AND j.title REGEXP '${filteredTerm}' ORDER BY j.title ASC LIMIT 20;` +
                     `UPDATE recipes SET view_recipes = NULL WHERE user_id = '${id}';`;
         }
 
@@ -159,7 +176,8 @@ module.exports = (router, runQuery, checkDup, updateNext) => {
 
                 for(var obj of recipes){
                     if(obj.title != current){
-                        list.push({id: obj.title});
+                        const objId = unescape(obj.title);
+                        list.push({id: objId});
                     }
                     ind++;
                     if(ind > 20){
@@ -168,9 +186,9 @@ module.exports = (router, runQuery, checkDup, updateNext) => {
                 }
 
                 if(recipes.length > 20){
-                    return res.json({list : list, _tail: recipes[19].title, _end: 0});
+                    return res.json({list : list, _tail: unescape(recipes[19].title), _end: 0});
                 }else{
-                    return res.json({list : list, _tail: recipes[recipes.length-1].title, _end: 1});
+                    return res.json({list : list, _tail: unescape(recipes[recipes.length-1].title), _end: 1});
                 }
 
             }else{

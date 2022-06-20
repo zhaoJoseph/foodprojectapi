@@ -1,9 +1,12 @@
 module.exports = (router, runQuery, checkDup, updateNext) => {
 
+    const {sanitize, unescape} = require('../helperFuncs/sanitize');
+
     router.get('/', async (req, res) => {
         const {id, name} = req.query;
         let result;
-        var query = `SELECT JSON_EXTRACT(recipeList, '$.recipelist."${name}"') FROM recipes WHERE user_id='${id}'`;
+        var searchName = sanitize(name);
+        var query = `SELECT JSON_EXTRACT(recipeList, '$.recipelist."${searchName}"') FROM recipes WHERE user_id='${id}'`;
         var recipe = {};
         try{
             result = await runQuery(query);
@@ -17,6 +20,17 @@ module.exports = (router, runQuery, checkDup, updateNext) => {
                 const key = Object.keys(result[0])[0];
 
                 const recipe = JSON.parse(result[0][key]);
+
+                recipe.title = unescape(recipe.title);
+
+                recipe['steps'].forEach(function(e, index){
+                    recipe['steps'][index] = unescape(e);
+                });
+
+                recipe['ingredients'].forEach(function(e){
+                    e.ingredient = unescape(e.ingredient);
+                    e.quantity = unescape(e.quantity);
+                });    
                 
                 return res.json({recipe: recipe});
             }else{
@@ -33,6 +47,7 @@ module.exports = (router, runQuery, checkDup, updateNext) => {
     router.put('/', async (req, res) => {
         const {id} = req.body;
         var {name, recipe} = req.body;
+        recipe.title = sanitize(recipe.title);
 
         try{
             if(await checkDup(recipe.title, id)){
@@ -59,6 +74,13 @@ module.exports = (router, runQuery, checkDup, updateNext) => {
             recipe._head = tailRecipe;
         }
 
+        recipe['steps'].forEach(function(e, index){
+               recipe['steps'][index] = sanitize(e).replace(/[\n\r]/g, " ");
+        });
+        recipe['ingredients'].forEach(function(e){
+            e.ingredient = sanitize(e.ingredient);
+            e.quantity = sanitize(e.quantity);
+        });
 
         query = `SELECT JSON_EXTRACT(recipeList, '$.recipelist."${name}"') FROM recipes WHERE user_id = '${id}';`;
         try {
