@@ -58,6 +58,7 @@ const userRoutes = require('../routes/user')(express.Router(), runQuery);
 const recipeListRoutes = require('../routes/recipesList')(express.Router(), runQuery, checkDup, updateNext);
 const recipeRoutes = require('../routes/recipe')(express.Router(), runQuery, checkDup, updateNext);
 const urlRoutes = require('../routes/url')(express.Router(), runQuery);
+const locationRoutes = require('../routes/locations')(express.Router(), runQuery);
 
 app.use('/oauth', authModel);
 app.use('/user', userRoutes);
@@ -65,6 +66,7 @@ app.use('/user', userRoutes);
 app.use(authenticate);
 app.use('/recipesList', recipeListRoutes);
 app.use('/recipe', recipeRoutes);
+app.use('/locations', locationRoutes);
 app.use('/url', urlRoutes);
 
 app.get('/' , async (req, res) => {
