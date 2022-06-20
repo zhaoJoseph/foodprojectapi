@@ -38,6 +38,7 @@ if(process.env.NODE_ENV == "production"){
     })  
 }   
 
+const {errorHandler} = require('../middleware/errorHandler');
 const runQuery = require('../dbFuncs/query')(pool);
 const updateNext = require('../dbFuncs/updateNext')(runQuery, pool);
 const checkDup = require('../dbFuncs/checkDup')(runQuery, pool);
@@ -58,5 +59,7 @@ app.get('/' , async (req, res) => {
         res.json({status: "Connection Successful."});
     }
 )
+
+app.use(errorHandler);
 
 module.exports = app;
