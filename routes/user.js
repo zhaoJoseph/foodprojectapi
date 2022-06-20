@@ -1,10 +1,14 @@
 module.exports = (router, runQuery, app) => {
+    const bcrypt = require('bcrypt');
+
     //register 
     router.post('/', async (req, res) => {
         try{
             const {email, password} = req.body.params;
+            const saltRounds = 10;
+            const encryptedPassword = await bcrypt.hash(password, saltRounds);
             var id;
-            var query = `INSERT INTO users(email, password) VALUES ('${email}', '${password}');`;
+            var query = `INSERT INTO users(email, password) VALUES ('${email}', '${encryptedPassword}');`;
             var result;
             await runQuery(query).then(data => result = data);
             query = `SELECT LAST_INSERT_ID();`;

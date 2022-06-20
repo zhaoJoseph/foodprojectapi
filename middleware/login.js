@@ -1,5 +1,7 @@
 module.exports = (runQuery) => {
 
+    const bcrypt = require('bcrypt');
+
     const login = async function(req, res, next) {
                 const {username, password} = req.query;
                 var query = `SELECT id, password FROM users WHERE email='${username}';`;
@@ -14,7 +16,7 @@ module.exports = (runQuery) => {
                 result = JSON.parse(result);
                 if(result.length > 0){
 
-                    const compare = result[0].password;
+                    const compare = await bcrypt.compare(password, result[0].password);
                     if(compare){
                         req.query.id = result[0].id;
                         return next();
@@ -33,4 +35,3 @@ module.exports = (runQuery) => {
         return login;
 
 }
-
