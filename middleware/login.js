@@ -9,12 +9,11 @@ module.exports = (runQuery) => {
                 try{
                     result = await runQuery(query);
                 }catch(e) {
+                    console.log("Error Occured");
                     var err = new Error(e);
                     err.status = 404;
                     next(err);
                 }
-
-
                 console.log(result);
 
                 result = JSON.parse(result);
