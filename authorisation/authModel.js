@@ -21,6 +21,8 @@ module.exports = (router, runQuery) => {
 
     router.get('/accesscode', cors(), login, async (req, res) => {
 
+        console.log("REACHED");
+
         const {client_id, id, redirect_uri, grant_type, code_challenge, code_challenge_method} = req.query;
 
         const URL_CALLBACK = process.env.NODE_ENV == 'development' ?  `http://192.168.1.145:3000/oauth/token` : 'https://foodprojectapi-jmfqfft64a-uc.a.run.app/oauth/token';
