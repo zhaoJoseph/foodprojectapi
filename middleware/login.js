@@ -13,6 +13,8 @@ module.exports = (runQuery) => {
                     err.status = 404;
                     next(err);
                 }
+
+
                 console.log(result);
 
                 result = JSON.parse(result);
