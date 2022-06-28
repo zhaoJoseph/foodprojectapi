@@ -13,6 +13,7 @@ module.exports = (runQuery) => {
                     err.status = 404;
                     next(err);
                 }
+
                 result = JSON.parse(result);
                 if(result.length > 0){
 

@@ -10,7 +10,7 @@ module.exports = (router, runQuery) => {
         return str
           .toString("base64")
           .replace(/\+/g, "-")
-          .replace(/\//g, "_")
+          .replace(/\//g, "_")  
           .replace(/=/g, "");
 
       }
@@ -23,10 +23,10 @@ module.exports = (router, runQuery) => {
 
         const {client_id, id, redirect_uri, grant_type, code_challenge, code_challenge_method} = req.query;
 
-        const URL_CALLBACK = `http://10.0.2.2:3000/oauth/token`;
+        const URL_CALLBACK = process.env.NODE_ENV == 'development' ?  `http://192.168.1.145:3000/oauth/token` : 'https://foodapi-jmfqfft64a-uc.a.run.app/oauth/token';
  
         if(redirect_uri == URL_CALLBACK && client_id == process.env.CLIENT_ID && grant_type == "authorization_code" && id && code_challenge && code_challenge_method){
-
+        
         const authCode = new Array(10).fill(null).map(() => Math.floor(Math.random() * 10)).join('');
 
         const storeCode = `INSERT INTO access_codes (code, challenge, time_creation) VALUES ("${authCode}", "${code_challenge}:${code_challenge_method}",CURRENT_TIMESTAMP()) ON DUPLICATE KEY UPDATE code = "${authCode}";`;
@@ -78,7 +78,7 @@ module.exports = (router, runQuery) => {
 
         const authCode = codeRes.code;
 
-        const URL_CALLBACK = `http://10.0.2.2:3000/oauth/token`;
+        const URL_CALLBACK = process.env.NODE_ENV == 'development' ? `http://192.168.1.145:3000/oauth/token` : 'https://foodapi-jmfqfft64a-uc.a.run.app/oauth/token' ;
 
         let verified;
 
