@@ -127,7 +127,7 @@ module.exports = (router, runQuery, checkDup, updateNext) => {
 
         if(filterCurrent){
             query = `UPDATE recipes SET view_recipes = recipes.recipeList->"$.recipelist.*" WHERE user_id = ${id};` + 
-                    `SELECT j.title FROM recipes, JSON_TABLE(recipes.view_recipes, '$[*]' ` + 
+                    `SELECT j.title, j.images FROM recipes, JSON_TABLE(recipes.view_recipes, '$[*]' ` + 
                     `COLUMNS ( ` +
                     `title TEXT PATH '$.title', ` +
                     ` cook JSON PATH '$.cook',` +
@@ -135,13 +135,14 @@ module.exports = (router, runQuery, checkDup, updateNext) => {
                     ` steps JSON PATH '$.steps', `+
                     ` _head TEXT PATH '$._head',`+
                     ` _next TEXT PATH '$._next', `+
+                    `images JSON PATH '$.images', `+ 
                     `ingredients JSON PATH '$.ingredients' `+
                     `)) AS j `+
                     `WHERE user_id = ${id} AND j.title REGEXP '${filteredTerm}' AND j.title > '${filterCurrent}' ORDER BY j.title ASC LIMIT 20;` +
                     `UPDATE recipes SET view_recipes = NULL WHERE user_id = '${id}';`;
         }else{
             query = `UPDATE recipes SET view_recipes = recipes.recipeList->"$.recipelist.*" WHERE user_id = ${id};` + 
-                    `SELECT j.title FROM recipes, JSON_TABLE(recipes.view_recipes, '$[*]' ` + 
+                    `SELECT j.title, j.images FROM recipes, JSON_TABLE(recipes.view_recipes, '$[*]' ` + 
                     `COLUMNS ( ` +
                     `title TEXT PATH '$.title', ` +
                     ` cook JSON PATH '$.cook',` +
@@ -149,6 +150,7 @@ module.exports = (router, runQuery, checkDup, updateNext) => {
                     ` steps JSON PATH '$.steps', `+
                     ` _head TEXT PATH '$._head',`+
                     ` _next TEXT PATH '$._next', `+
+                    `images JSON PATH '$.images', `+ 
                     `ingredients JSON PATH '$.ingredients' `+
                     `)) AS j `+
                     `WHERE user_id = '${id}' AND j.title REGEXP '${filteredTerm}' ORDER BY j.title ASC LIMIT 20;` +
@@ -177,7 +179,8 @@ module.exports = (router, runQuery, checkDup, updateNext) => {
                 for(var obj of recipes){
                     if(obj.title != current){
                         const objId = unescape(obj.title);
-                        list.push({id: objId});
+                        const imageArr = JSON.parse(obj.images);
+                        list.push({id: objId, image: imageArr.length > 0 ? imageArr[0] : ""});
                     }
                     ind++;
                     if(ind > 20){
