@@ -27,6 +27,9 @@ module.exports = (router, runQuery) => {
 
         const URL_CALLBACK = process.env.NODE_ENV == 'development' ?  `http://192.168.1.145:3000/oauth/token` : 'https://foodprojectapi-jmfqfft64a-uc.a.run.app/oauth/token';
  
+
+        console.log(redirect_uri == URL_CALLBACK);
+
         if(redirect_uri == URL_CALLBACK && client_id == process.env.CLIENT_ID && grant_type == "authorization_code" && id && code_challenge && code_challenge_method){
         
         const authCode = new Array(10).fill(null).map(() => Math.floor(Math.random() * 10)).join('');
